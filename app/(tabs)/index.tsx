@@ -1,74 +1,155 @@
-import { Image, StyleSheet, Platform } from 'react-native';
+import { Image, StyleSheet, Platform, View, Animated } from "react-native";
 
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import React, { useRef, useEffect, useState } from "react";
+import MapView, { Marker } from "react-native-maps";
+import * as Location from "expo-location";
 
 export default function HomeScreen() {
+  const mapRef = useRef(null);
+  const [location, setLocation] = useState(null);
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  // useEffect(() => {
+  //   (async () => {
+  //     const { status } = await Location.requestForegroundPermissionsAsync();
+  //     if (status !== "granted") {
+  //       console.log("Permission to access location was denied");
+  //       return;
+  //     }
+
+  //     const currentLocation = await Location.getCurrentPositionAsync({});
+  //     setLocation(currentLocation.coords);
+  //   })();
+  // }, []);
+
+  // useEffect(() => {
+  //   if (location && mapRef.current) {
+  //     mapRef.current.animateCamera({
+  //       center: {
+  //         latitude: location.latitude,
+  //         longitude: location.longitude,
+  //       },
+  //       zoom: 16,
+  //       heading: 0,
+  //       pitch: 0,
+  //     });
+  //   }
+  // }, [location]);
+
+  // Fetch the user's current location
+  useEffect(() => {
+    (async () => {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== "granted") {
+        console.log("Permission to access location was denied");
+        return;
+      }
+
+      const currentLocation = await Location.watchPositionAsync(
+        { accuracy: Location.Accuracy.High, timeInterval: 1000 },
+        (loc) => setLocation(loc.coords)
+      );
+    })();
+  }, []);
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulseAnim, {
+          toValue: 3, // Scale up
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(pulseAnim, {
+          toValue: 1, // Scale down
+          duration: 1000,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, [pulseAnim]);
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12'
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <View style={styles.container}>
+      {/* <MapView
+        ref={mapRef}
+        style={styles.map}
+        showsUserLocation
+        followsUserLocation={true}
+        showsCompass={true}
+      >
+        {location && (
+          <Marker
+            coordinate={{
+              latitude: location.latitude,
+              longitude: location.longitude,
+            }}
+            title="You are here"
+          />
+        )}
+      </MapView> */}
+
+      <MapView
+        style={styles.map}
+        showsUserLocation={true}
+        followsUserLocation={true}
+        initialRegion={{
+          latitude: location?.latitude || 37.78825,
+          longitude: location?.longitude || -122.4324,
+          latitudeDelta: 0.01,
+          longitudeDelta: 0.01,
+        }}
+      >
+        {location && (
+          <Marker
+            coordinate={{
+              latitude: location.latitude,
+              longitude: location.longitude,
+            }}
+          >
+            <View style={styles.puckContainer}>
+              {/* Pulsing animation */}
+              <Animated.View
+                style={[
+                  styles.pulse,
+                  {
+                    transform: [{ scale: pulseAnim }],
+                  },
+                ]}
+              />
+              {/* Location puck */}
+              <View style={styles.puck} />
+            </View>
+          </Marker>
+        )}
+      </MapView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  map: {
+    flex: 1,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+
+  puckContainer: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pulse: {
+    position: "absolute",
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    backgroundColor: "rgba(0, 122, 255, 0.3)",
+  },
+  puck: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "#007AFF",
+    borderWidth: 2,
+    borderColor: "white",
   },
 });
