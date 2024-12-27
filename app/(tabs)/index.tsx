@@ -3,11 +3,8 @@ import { Image, StyleSheet, Platform, View, Animated } from "react-native";
 import React, { useRef, useEffect, useState } from "react";
 import MapView, { Marker } from "react-native-maps";
 import * as Location from "expo-location";
-import scooters from "../../data/scooters.json";icon: {
-    width: 25,
-    height: 25,
-    resizeMode: 'contain', // Scales the image properly
-  },
+import scooters from "../../data/scooters.json";
+
 export default function HomeScreen() {
   const mapRef = useRef(null);
   const [location, setLocation] = useState(null);
@@ -135,7 +132,7 @@ export default function HomeScreen() {
             anchor={{ x: 0.5, y: 1 }} // Equivalent to iconAnchor: 'bottom'
           >
             <Image
-              source={require("./assets/pin.png")} // Replace with your pin icon
+              source={require("@/assets/images/pin.png")} // Replace with your pin icon
               style={styles.icon}
             />
           </Marker>
@@ -152,10 +149,10 @@ const styles = StyleSheet.create({
   map: {
     flex: 1,
   },
-icon: {
+  icon: {
     width: 25,
     height: 25,
-    resizeMode: 'contain', // Scales the image properly
+    resizeMode: "contain", // Scales the image properly
   },
   puckContainer: {
     alignItems: "center",
